@@ -3,7 +3,6 @@
 import json
 
 import joblib
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -20,19 +19,9 @@ from app.training import (
 from scripts import train_model
 
 
-def _make_df(n: int = 40, seed: int = 0) -> pd.DataFrame:
-    """构造可训练的小型合成数据(含 unknown 类别与不平衡目标)。"""
-    rng = np.random.default_rng(seed)
-    data = {c: rng.normal(size=n) for c in NUMERIC_COLUMNS}
-    data.update({c: rng.choice(["a", "b", "unknown"], size=n) for c in CATEGORICAL_COLUMNS})
-    data[ID_COLUMN] = range(n)
-    data[TARGET_COLUMN] = rng.choice(["no", "yes"], size=n, p=[0.85, 0.15])
-    return pd.DataFrame(data)
-
-
-def test_split_data_stratified():
+def test_split_data_stratified(make_df):
     # Arrange
-    df = _make_df(n=100, seed=5)
+    df = make_df(n=100, seed=5)
 
     # Act
     train, test = split_data(df)
@@ -56,9 +45,9 @@ def test_build_pipeline_steps():
     assert pipeline["model"].random_state == RANDOM_STATE
 
 
-def test_prepare_data_drops_id_and_maps_target():
+def test_prepare_data_drops_id_and_maps_target(make_df):
     # Arrange
-    df = _make_df()
+    df = make_df()
 
     # Act
     features, target = prepare_data(df)
@@ -87,10 +76,10 @@ def test_evaluate_values():
     assert set(metrics) == {"accuracy", "precision", "recall", "f1", "auc"}
 
 
-def test_train_and_evaluate_returns_pipeline_and_metrics():
+def test_train_and_evaluate_returns_pipeline_and_metrics(make_df):
     # Arrange
-    train_df = _make_df(n=60, seed=1)
-    test_df = _make_df(n=30, seed=2)
+    train_df = make_df(n=60, seed=1)
+    test_df = make_df(n=30, seed=2)
 
     # Act
     pipeline, metrics, y_true, y_pred = train_and_evaluate(train_df, test_df)
@@ -103,10 +92,10 @@ def test_train_and_evaluate_returns_pipeline_and_metrics():
     assert proba.shape == (len(test_df), 2)
 
 
-def test_save_artifact_writes_three_files(tmp_path):
+def test_save_artifact_writes_three_files(tmp_path, make_df):
     # Arrange
-    train_df = _make_df(n=40, seed=3)
-    test_df = _make_df(n=20, seed=4)
+    train_df = make_df(n=40, seed=3)
+    test_df = make_df(n=20, seed=4)
     pipeline, metrics, _, _ = train_and_evaluate(train_df, test_df)
 
     # Act
@@ -129,7 +118,7 @@ def test_save_artifact_writes_three_files(tmp_path):
     assert predicted[0] in {0, 1}
 
 
-def test_cli_gate_fails_below_threshold(monkeypatch, tmp_path):
+def test_cli_gate_fails_below_threshold(monkeypatch, make_df):
     # Arrange: 小数据 AUC 大概率低于门槛;直接替换训练结果强制失败
     fake_pipeline = build_pipeline()
     low_metrics = {"accuracy": 0.5, "precision": 0.1, "recall": 0.1, "f1": 0.1, "auc": 0.5}
@@ -137,7 +126,7 @@ def test_cli_gate_fails_below_threshold(monkeypatch, tmp_path):
     def _fake_train(train_df, test_df, class_weight="balanced"):
         return fake_pipeline, low_metrics, None, None
 
-    monkeypatch.setattr(train_model, "load_dataset", lambda _: _make_df(n=10))
+    monkeypatch.setattr(train_model, "load_dataset", lambda _: make_df(n=10))
     monkeypatch.setattr(train_model, "train_and_evaluate", _fake_train)
     monkeypatch.setattr(train_model, "save_artifact", lambda *a: None)
 
@@ -148,7 +137,7 @@ def test_cli_gate_fails_below_threshold(monkeypatch, tmp_path):
     assert code == 1  # AUC 0.5 < 0.75 → 门禁失败
 
 
-def test_cli_success_writes_artifact(monkeypatch, tmp_path):
+def test_cli_success_writes_artifact(monkeypatch, make_df):
     # Arrange
     fake_pipeline = build_pipeline()
     good_metrics = {"accuracy": 0.9, "precision": 0.8, "recall": 0.7, "f1": 0.75, "auc": 0.9}
@@ -161,7 +150,7 @@ def test_cli_success_writes_artifact(monkeypatch, tmp_path):
         written["metrics"] = metrics
         written["median"] = duration_median
 
-    monkeypatch.setattr(train_model, "load_dataset", lambda _: _make_df(n=10))
+    monkeypatch.setattr(train_model, "load_dataset", lambda _: make_df(n=10))
     monkeypatch.setattr(train_model, "train_and_evaluate", _fake_train)
     monkeypatch.setattr(train_model, "save_artifact", _fake_save)
 

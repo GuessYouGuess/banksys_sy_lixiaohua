@@ -25,3 +25,18 @@ def test_switch_to_predict_page():
     # Assert
     assert not at.exception
     assert at.header[0].value == "🎯 认购预测"
+
+
+def test_predict_page_submit_with_defaults():
+    # Arrange: 进入认购预测页
+    at = AppTest.from_file(APP_PATH, default_timeout=120).run()
+    at.sidebar.radio[0].set_value("认购预测").run()
+
+    # Act: 修改一个下拉框取值后提交表单
+    at.selectbox(key="cat_job").set_value("student").run()
+    at.button[0].click().run()
+
+    # Assert: 无异常,展示认购概率指标
+    assert not at.exception
+    assert at.metric[0].label == "认购概率"
+    assert at.metric[0].value.endswith("%")
