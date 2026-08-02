@@ -91,6 +91,36 @@ def test_validate_schema_nan_target_raises():
         validate_schema(df)
 
 
+def test_validate_schema_without_target_ok():
+    # Arrange: 无标签(仅特征列)数据
+    df = _valid_df().drop(columns=[TARGET_COLUMN])
+
+    # Act
+    result = validate_schema(df, require_target=False)
+
+    # Assert
+    assert result is df
+
+
+def test_validate_schema_requires_target_by_default():
+    # Arrange
+    df = _valid_df().drop(columns=[TARGET_COLUMN])
+
+    # Act / Assert
+    with pytest.raises(ValueError, match="subscribe"):
+        validate_schema(df)
+
+
+def test_real_test_csv_no_target():
+    """真实无标签预测集(21 列)可加载(数据门禁,见 03 规范)。"""
+    # Arrange / Act
+    df = load_dataset("data/test.csv", require_target=False)
+
+    # Assert
+    assert len(df) == 7500
+    assert TARGET_COLUMN not in df.columns
+
+
 def test_load_dataset_end_to_end(tmp_path):
     # Arrange
     path = _write_csv(tmp_path, _valid_df())

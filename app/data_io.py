@@ -4,7 +4,14 @@ from pathlib import Path
 
 import pandas as pd
 
-from app.config import REQUIRED_COLUMNS, TARGET_COLUMN, TARGET_VALUES
+from app.config import (
+    CATEGORICAL_COLUMNS,
+    ID_COLUMN,
+    NUMERIC_COLUMNS,
+    REQUIRED_COLUMNS,
+    TARGET_COLUMN,
+    TARGET_VALUES,
+)
 
 
 def load_csv(path: str | Path) -> pd.DataFrame:
@@ -18,19 +25,25 @@ def load_csv(path: str | Path) -> pd.DataFrame:
         raise ValueError(f"数据文件为空: {path}") from exc
 
 
-def validate_schema(df: pd.DataFrame) -> pd.DataFrame:
-    """校验列完整性与目标取值,不合法抛 ValueError;合法则原样返回。"""
-    missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+def validate_schema(df: pd.DataFrame, require_target: bool = True) -> pd.DataFrame:
+    """校验列完整性与目标取值,不合法抛 ValueError;合法则原样返回。
+
+    require_target=False 用于无标签预测集(如 data/test.csv,仅特征列)。
+    """
+    feature_columns = [ID_COLUMN, *NUMERIC_COLUMNS, *CATEGORICAL_COLUMNS]
+    required = REQUIRED_COLUMNS if require_target else feature_columns
+    missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"缺少必需列: {missing}")
-    if df[TARGET_COLUMN].isna().any():
-        raise ValueError(f"目标列 {TARGET_COLUMN} 存在空值")
-    bad = sorted(set(df[TARGET_COLUMN].unique()) - set(TARGET_VALUES))
-    if bad:
-        raise ValueError(f"目标列 {TARGET_COLUMN} 含非法取值: {bad}")
+    if require_target:
+        if df[TARGET_COLUMN].isna().any():
+            raise ValueError(f"目标列 {TARGET_COLUMN} 存在空值")
+        bad = sorted(set(df[TARGET_COLUMN].unique()) - set(TARGET_VALUES))
+        if bad:
+            raise ValueError(f"目标列 {TARGET_COLUMN} 含非法取值: {bad}")
     return df
 
 
-def load_dataset(path: str | Path) -> pd.DataFrame:
+def load_dataset(path: str | Path, require_target: bool = True) -> pd.DataFrame:
     """加载并校验数据集的便捷入口。"""
-    return validate_schema(load_csv(path))
+    return validate_schema(load_csv(path), require_target=require_target)
