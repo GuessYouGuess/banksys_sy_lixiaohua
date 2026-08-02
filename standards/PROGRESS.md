@@ -8,12 +8,13 @@
 
 ## 当前状态 (最后更新: 2026-08-02 · by Claude)
 
-- **阶段**:`CD 部署成功,六步链闭环(PR #1 已完成)`(对应 `06` 六步流程:第 ⑥ 步「人工审核→合并→CD」✅)
+- **阶段**:`US-2 开发完成,待确认发 PR #2`(对应 `06` 六步流程:第 ③④ 步,`feature/2-analysis` 分支)
 - **上一步完成**:
-  - ⑥ 人类合并 PR #1(merge commit `e20052e`)→ CD 自动触发并成功(3m35s)
-  - **落地端口 8890**(8888/8889 已被占,自动回退生效 ✅);健康检查 `/_stcore/health` 返回 `ok` ✅
-  - 访问地址:http://<SSH_HOST>:8890(当前为占位应用)
-- **下一步 (TODO 第一条)**:开 `feature/2-analysis`(US-2 数据分析页):M2 数据层 → M3 分析逻辑 → M4 分析页;data/ 随之入库
+  - M2 数据层(commit `5cc6684`):config schema 常量、data_io 加载/校验、data/ 入库、真实数据门禁测试
+  - M3 分析逻辑(commit `aa47f18`):7 个统计纯函数 + 7 测试
+  - M4 分析页(commit `bce9375`):侧边栏导航、概览指标、目标/分类/数值分布、分组对比、相关矩阵、交互筛选;AppTest 冒烟;Dockerfile 加 data 拷贝
+  - 本地自检全绿:ruff ✅、19 tests ✅、覆盖率 97.5% ✅、真实启动健康检查 ok ✅
+- **下一步 (TODO 第一条)**:✋ 等人类确认 → push `feature/2-analysis` + `gh pr create`(PR #2, closes #2)
 - **阻塞项**:无
 
 > **⚠️ 分支策略修订(待人类确认)**:原计划 M1~M9 全在本分支。按 `04`/`06`「一需求一分支一 PR、PR < 400 行」,改为:
@@ -42,7 +43,7 @@
 **③ 本地模块化开发(逐模块汇报,每个模块过确认门)**
 - [x] **M1 工程骨架**(本分支):pyproject/ruff、requirements 拆分、app 包 + 占位入口、冒烟测试 ✅ 本地自检全绿,健康端点实测 `ok`
 - [x] **M9 前移(本分支,PR #1 收尾)**:Dockerfile(端口 8888、`PIP_INDEX_URL`、HEALTHCHECK)、`ci.yml` + `cd.yml`、`scripts/deploy.sh`、`.gitattributes`、README、LICENSE ✅ 提交 `e5aed15`,YAML/bash 语法校验通过
-- [ ] **US-2 → `feature/2-analysis`**:M2 数据层(`app/data_io.py` + 测试)→ M3 分析逻辑(纯函数 + 测试)→ M4 分析页;data/ 随本分支入库
+- [x] **US-2 → `feature/2-analysis`** ✅ 已完成:M2 数据层(含 data/ 入库)+ M3 分析逻辑 + M4 分析页;本地 19 tests 全绿,覆盖率 97.5%
 - [ ] **US-3 → `feature/3-training`**:M5 离线训练(`scripts/train_model.py`、AUC ≥ 0.75 门禁、产物入 `models/`)
 - [ ] **US-4 → `feature/4-prediction`**:M6 预测逻辑(`app/predictor.py` + 测试)→ M7 预测页 → M8 入口导航整合
 
