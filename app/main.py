@@ -1,12 +1,19 @@
-"""Streamlit 应用入口(占位)。
-
-数据分析页与认购预测页将在后续模块中接入,当前仅保证可启动、
-可被健康检查探测,以验证工程与部署链路。
-"""
+"""Streamlit 应用入口:侧边栏导航(数据分析页 / 认购预测页)。"""
 
 import streamlit as st
 
+from app.ui.analysis_page import render as render_analysis
+from app.ui.predict_page import render as render_predict
+
 st.set_page_config(page_title="银行营销认购预测系统", page_icon="🏦", layout="wide")
 
-st.title("银行营销认购预测系统")
-st.write("数据分析与在线预测功能开发中,进度见 standards/PROGRESS.md。")
+PAGES = {"数据分析": render_analysis, "认购预测": render_predict}
+
+
+def main() -> None:
+    st.sidebar.title("🏦 银行营销认购预测系统")
+    page = st.sidebar.radio("页面", list(PAGES), label_visibility="collapsed")
+    PAGES[page]()
+
+
+main()

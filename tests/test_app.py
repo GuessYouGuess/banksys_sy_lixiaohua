@@ -1,0 +1,27 @@
+"""应用冒烟测试:侧边栏导航两页可渲染(streamlit AppTest 真实执行脚本)。"""
+
+from streamlit.testing.v1 import AppTest
+
+APP_PATH = "app/main.py"
+
+
+def test_analysis_page_renders():
+    # Arrange / Act: 默认选中第一个页面(数据分析),真实执行
+    at = AppTest.from_file(APP_PATH, default_timeout=120).run()
+
+    # Assert
+    assert not at.exception
+    assert at.title[0].value == "🏦 银行营销认购预测系统"  # 侧边栏标题
+    assert at.header[0].value == "📊 数据分析"
+
+
+def test_switch_to_predict_page():
+    # Arrange
+    at = AppTest.from_file(APP_PATH, default_timeout=120).run()
+
+    # Act: 切换到认购预测页
+    at.sidebar.radio[0].set_value("认购预测").run()
+
+    # Assert
+    assert not at.exception
+    assert at.header[0].value == "🎯 认购预测"
