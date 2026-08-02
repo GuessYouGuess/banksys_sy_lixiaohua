@@ -8,10 +8,14 @@
 
 ## 当前状态 (最后更新: 2026-08-02 · by Claude)
 
-- **阶段**:`feature 分支已开,待确认进入开发`(对应 `06` 六步流程:第 ② 步「开 feature 分支」)
-- **上一步完成**:Secrets 已配置并核对(`SSH_HOST`/`SSH_PRIVATE_KEY`/`SSH_USER` 均在 2026-08-02 配置)
-- **下一步 (TODO 第一条)**:✋ 等人类确认分支名 → 进入第 ③ 步 M1 开发
+- **阶段**:`M1 完成,汇报确认中`(对应 `06` 六步流程:第 ③ 步「本地模块化开发」)
+- **上一步完成**:M1 工程骨架完成并提交(commit `e680804`):pyproject(ruff/pytest)、requirements 拆分、app 包 + 占位入口、冒烟测试;本地自检全绿(ruff format/check、pytest 1 passed);streamlit 8888 端口健康端点 `/_stcore/health` 实测返回 `ok`
+- **下一步 (TODO 第一条)**:✋ 等人类确认分支策略(见下)后继续
 - **阻塞项**:无
+
+> **⚠️ 分支策略修订(待人类确认)**:原计划 M1~M9 全在本分支。按 `04`/`06`「一需求一分支一 PR、PR < 400 行」,改为:
+> - 本分支(`feature/1-init-engineering`,US-1)只做:骨架 + Dockerfile + CI/CD workflows + README → PR #1 完整演示 六步链(CI 全绿→人工合并→CD 部署→健康检查)
+> - US-2 分析页 → `feature/2-analysis`;US-3 训练 → `feature/3-training`;US-4 预测 → `feature/4-prediction`(各自 PR,每轮复用已跑通的链路)
 
 ---
 
@@ -33,15 +37,11 @@
 - [ ] 从最新 main 切 `feature/1-init-engineering`(US-1 工程初始化,不直接改 main)
 
 **③ 本地模块化开发(逐模块汇报,每个模块过确认门)**
-- [ ] M1 工程骨架:pyproject/ruff 配置、`requirements.txt` + `requirements-dev.txt`、`.gitignore`
-- [ ] M2 数据层:`app/data_io.py` 加载 + schema 校验(纯函数)+ 测试
-- [ ] M3 分析逻辑:`app/analysis.py` 统计纯函数 + 测试
-- [ ] M4 数据分析页:`app/ui/analysis_page.py`(概览、分布、分组对比、相关性、筛选)
-- [ ] M5 离线训练:`scripts/train_model.py`(固定种子、评估报告、AUC ≥ 0.75 门禁、产物入 `models/`)
-- [ ] M6 预测逻辑:`app/predictor.py`(预处理一致性 + 输入校验)+ 测试
-- [ ] M7 认购预测页:`app/ui/predict_page.py`(点选表单 + 结果展示)
-- [ ] M8 入口:`app/main.py` 侧边栏导航两页 + 缓存
-- [ ] M9 Docker + 文档:Dockerfile(端口 8888、`PIP_INDEX_URL` 参数)、README、LICENSE
+- [x] **M1 工程骨架**(本分支):pyproject/ruff、requirements 拆分、app 包 + 占位入口、冒烟测试 ✅ 本地自检全绿,健康端点实测 `ok`
+- [ ] **M9 前移(本分支,PR #1 收尾)**:Dockerfile(端口 8888、`PIP_INDEX_URL`)、`ci.yml` + `cd.yml`、`.gitattributes`(行尾统一)、README 完善、LICENSE
+- [ ] **US-2 → `feature/2-analysis`**:M2 数据层(`app/data_io.py` + 测试)→ M3 分析逻辑(纯函数 + 测试)→ M4 分析页;data/ 随本分支入库
+- [ ] **US-3 → `feature/3-training`**:M5 离线训练(`scripts/train_model.py`、AUC ≥ 0.75 门禁、产物入 `models/`)
+- [ ] **US-4 → `feature/4-prediction`**:M6 预测逻辑(`app/predictor.py` + 测试)→ M7 预测页 → M8 入口导航整合
 
 **④ 本地 CI 自检(AI 执行,全绿才继续)**
 - [ ] `ruff format --check .` + `ruff check .`
