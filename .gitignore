@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 环境变量与密钥(绝不入库)
+.env
+*.pem
+*.key
+
+# 部署相关
+deploy.log
+
+# 注意:data/(公开教学数据)与 models/(训练产物)按项目约定进 Git,不在 .gitignore 中排除
