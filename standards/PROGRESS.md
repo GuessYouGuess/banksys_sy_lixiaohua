@@ -8,10 +8,13 @@
 
 ## 当前状态 (最后更新: 2026-08-02 · by Claude)
 
-- **阶段**:`M1 完成,汇报确认中`(对应 `06` 六步流程:第 ③ 步「本地模块化开发」)
-- **上一步完成**:M1 工程骨架完成并提交(commit `e680804`):pyproject(ruff/pytest)、requirements 拆分、app 包 + 占位入口、冒烟测试;本地自检全绿(ruff format/check、pytest 1 passed);streamlit 8888 端口健康端点 `/_stcore/health` 实测返回 `ok`
-- **下一步 (TODO 第一条)**:✋ 等人类确认分支策略(见下)后继续
-- **阻塞项**:无
+- **阶段**:`PR #1 CI 全绿,等待人类 Review+合并`(对应 `06` 六步流程:第 ⑤ 步「触发 PR」→ 第 ⑥ 步「人工审核→合并→CD」)
+- **上一步完成**:
+  - ⑤ PR #1 已创建:`https://github.com/GuessYouGuess/banksys_sy_lixiaohua/pull/1`(closes #1)
+  - CI 复检全绿(run 30729332926):build ✓ / lint ✓ / test ✓(覆盖率 100%)
+  - 修复提交 `f360c57`:pytest pythonpath 配置 + actions 升 v7
+- **下一步 (TODO 第一条)**:✋ 等人类 Review + 合并 PR #1;合并后 CD 自动部署,AI 盯流水线并汇报端口/健康检查
+- **阻塞项**:无(AI 不自行合并,合并是人类的动作)
 
 > **⚠️ 分支策略修订(待人类确认)**:原计划 M1~M9 全在本分支。按 `04`/`06`「一需求一分支一 PR、PR < 400 行」,改为:
 > - 本分支(`feature/1-init-engineering`,US-1)只做:骨架 + Dockerfile + CI/CD workflows + README → PR #1 完整演示 六步链(CI 全绿→人工合并→CD 部署→健康检查)
@@ -38,7 +41,7 @@
 
 **③ 本地模块化开发(逐模块汇报,每个模块过确认门)**
 - [x] **M1 工程骨架**(本分支):pyproject/ruff、requirements 拆分、app 包 + 占位入口、冒烟测试 ✅ 本地自检全绿,健康端点实测 `ok`
-- [ ] **M9 前移(本分支,PR #1 收尾)**:Dockerfile(端口 8888、`PIP_INDEX_URL`)、`ci.yml` + `cd.yml`、`.gitattributes`(行尾统一)、README 完善、LICENSE
+- [x] **M9 前移(本分支,PR #1 收尾)**:Dockerfile(端口 8888、`PIP_INDEX_URL`、HEALTHCHECK)、`ci.yml` + `cd.yml`、`scripts/deploy.sh`、`.gitattributes`、README、LICENSE ✅ 提交 `e5aed15`,YAML/bash 语法校验通过
 - [ ] **US-2 → `feature/2-analysis`**:M2 数据层(`app/data_io.py` + 测试)→ M3 分析逻辑(纯函数 + 测试)→ M4 分析页;data/ 随本分支入库
 - [ ] **US-3 → `feature/3-training`**:M5 离线训练(`scripts/train_model.py`、AUC ≥ 0.75 门禁、产物入 `models/`)
 - [ ] **US-4 → `feature/4-prediction`**:M6 预测逻辑(`app/predictor.py` + 测试)→ M7 预测页 → M8 入口导航整合
@@ -74,8 +77,12 @@
 
 ## 已知坑 (GOTCHAS)
 
-- 暂无真实故障(尚未进入开发)。已知数据风险(已写进 `01` 技术备注):分类列含 `unknown` 值(`default` 21.6%)需明确处理策略;正样本仅 13.1%(类别不平衡,不能只看准确率)。
-- 后续 CI/CD 真实故障必须按 `06` 第 5 节「故障反哺铁律」写回本文件。
+- **CI `ModuleNotFoundError: No module named 'app'`**:本地 `python -m pytest` 会隐式把 cwd 加入 sys.path,CI 直接调 `pytest` 控制台脚本不会。解决:pyproject `[tool.pytest.ini_options] pythonpath = ["."]`;验证:本地直接调 `pytest.exe` 复现修复后通过。
+- **actions Node.js 20 弃用警告**:checkout@v4/setup-python@v5 被迫跑在 Node 24。解决:升 `actions/checkout@v7`、`actions/setup-python@v7`(2026-08-02 查最新 tag)。
+- **push 网络超时**:`Failed to connect to github.com:443`(HTTPS 抖动)。解决:重试;注意 push 输出 `e5aed15..f360c57` 可能已成功而后续命令报错,用 `git ls-remote`/`gh run list` 核实。
+- **conda 4.9.2 `run` 不支持多行 `-c`**:Windows 下 `conda run -n env python -c "<多行>"` 报 `AssertionError: Support for scripts where arguments contain newlines`。解决:写单行脚本或直调 `envs/<env>/python.exe`。
+- **pandas 3.0 已安装**:本地/CI 均解析到 pandas 3.0.5(主要版本升级,行为有变),后续模块注意 API 兼容;已锁下限 `pandas>=2.0`。
+- 数据风险(见 `01` 技术备注):分类列含 `unknown` 值(`default` 21.6%);正样本仅 13.1%(类别不平衡)。
 
 ---
 
