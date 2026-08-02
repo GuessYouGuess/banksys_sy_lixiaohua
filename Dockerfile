@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir --timeout 120 -i "${PIP_INDEX_URL}" -r requiremen
 
 COPY app/ ./app/
 COPY models/ ./models/
+COPY data/ ./data/
 
 EXPOSE 8888
 
