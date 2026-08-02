@@ -8,12 +8,13 @@
 
 ## 当前状态 (最后更新: 2026-08-02 · by Claude)
 
-- **阶段**:`US-3 完成,待确认发 PR #3`(对应 `06` 六步流程:第 ③④ 步,`feature/3-training` 分支)
+- **阶段**:`US-4 完成,待确认发 PR #4`(对应 `06` 六步流程:第 ③④ 步,`feature/4-prediction` 分支)
 - **上一步完成**:
-  - M5 离线训练(commit `5d6202d`):training 模块 + CLI + 门禁,30 tests 全绿,覆盖率 98%
-  - **真实训练验证:AUC 0.8089 ≥ 0.75 门禁通过**(accuracy 0.7944 / precision 0.3586 / recall 0.7203 / f1 0.4789);重跑指标一致(seed=42 可复现)
-  - 产物入库:`models/`(model.joblib 6.7KB / metrics.json / metadata.json)
-- **下一步 (TODO 第一条)**:✋ 等人类确认 → push `feature/3-training` + `gh pr create`(PR #3, closes #3)
+  - US-3 已上线(端口 8897);M6 预测逻辑 + M7 预测页(commit `c1874e5`)
+  - 预测页:分类下拉框(取值自训练数据)+ 数值输入(范围与中位数默认值自训练数据),duration 不收集、按中位数 350 填充
+  - 37 tests 全绿,覆盖率 96.6%;真实预测验证:默认客户 18.5%(no)、高潜客户 54.1%(yes)
+  - deploy.sh 端口修复:先删自身旧容器再找空闲端口(端口漂移 8890→8891→8897 隐患,见 GOTCHAS)
+- **下一步 (TODO 第一条)**:✋ 等人类确认 → push `feature/4-prediction` + `gh pr create`(PR #4, closes #4)
 - **阻塞项**:无
 
 > **⚠️ 分支策略修订(待人类确认)**:原计划 M1~M9 全在本分支。按 `04`/`06`「一需求一分支一 PR、PR < 400 行」,改为:
@@ -74,11 +75,16 @@
 | 2026-08-02 | ⏳ **待决策:二分类算法选择** | 推荐:逻辑回归 + 类别权重起步,GBM 作为对比;评估后固定一种,门禁 AUC ≥ 0.75 不变 |
 | 2026-08-02 | **数据事实修正:test.csv 无标签** | 实测 test.csv 仅 21 特征列(7500 行,无 subscribe),是预测池而非评估集;评估改用 train.csv 内部 80/20 分层划分(seed=42)。`data_io.validate_schema` 增加 `require_target` 参数支持无标签集 |
 | 2026-08-02 | **算法定案:逻辑回归(class_weight=balanced)** | 真实训练 AUC 0.8089 通过门禁,可复现;GBM 留作后续对比(不阻塞交付) |
+| 2026-08-02 | **预测表单数值默认值=训练中位数** | 初版用范围中点(campaign 默认 32)导致演示概率失真;改中位数更代表典型客户 |
+| 2026-08-02 | **deploy.sh 端口回收修复** | 原模板先查端口再删旧容器 → 端口一路漂移(8890→8891→8897),区间 11 个端口很快耗尽;改为先 `docker rm -f` 自身旧容器再找空闲端口 |
 
 ---
 
 ## 已知坑 (GOTCHAS)
 
+- **容器内 `ModuleNotFoundError: No module named 'app'`(线上故障,用户浏览器报错)**:`streamlit run app/main.py` 只把脚本目录(`/app/app`)加入 sys.path,不加入 cwd,`from app.ui...` 失败。解决:新增仓库根目录启动包装器 `run.py`(先插入 ROOT 再 import app.main),Dockerfile CMD 与 README 均改指 `run.py`。验证:去掉 pytest pythonpath 后 AppTest 3 passed(模拟容器场景)。
+- **app/main.py 模块级调用 main() 导致 radio ID 重复**:`run.py` 里 `from app.main import main` 时,模块级 `main()` 已在脚本上下文中执行一次,run.py 再调一次 → `StreamlitDuplicateElementId`。之前 pytest 全绿是假象:test_smoke 在测试进程里先导入 app.main,模块级调用发生在脚本上下文外被当作 no-op。解决:删掉 app/main.py 的模块级 `main()` 调用,统一入口 run.py。
+- **健康检查 `/_stcore/health` 返回 ok ≠ 应用渲染成功**:health 端点不执行应用脚本(会话由浏览器 websocket 触发)。本地"启动验证"必须用 AppTest 或真实浏览器访问,不能只看 health。
 - **CI `ModuleNotFoundError: No module named 'app'`**:本地 `python -m pytest` 会隐式把 cwd 加入 sys.path,CI 直接调 `pytest` 控制台脚本不会。解决:pyproject `[tool.pytest.ini_options] pythonpath = ["."]`;验证:本地直接调 `pytest.exe` 复现修复后通过。
 - **actions Node.js 20 弃用警告**:checkout@v4/setup-python@v5 被迫跑在 Node 24。解决:升 `actions/checkout@v7`、`actions/setup-python@v7`(2026-08-02 查最新 tag)。
 - **push 网络超时**:`Failed to connect to github.com:443`(HTTPS 抖动)。解决:重试;注意 push 输出 `e5aed15..f360c57` 可能已成功而后续命令报错,用 `git ls-remote`/`gh run list` 核实。

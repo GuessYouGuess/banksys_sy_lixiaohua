@@ -15,6 +15,10 @@ PIP_INDEX_URL="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 echo ">> 构建镜像 ${APP}:latest"
 docker build --build-arg PIP_INDEX_URL="${PIP_INDEX_URL}" -t "${APP}:latest" .
 
+# 先停删自身旧容器(幂等),再找空闲端口:否则旧端口每次部署都被跳过,
+# 端口会一路漂移(8890→8891→8897…),预留区间很快耗尽(见 PROGRESS GOTCHAS)
+docker rm -f "${APP}" 2>/dev/null || true
+
 port_in_use() {
   ss -ltnH 2>/dev/null | grep -q ":$1 " && return 0
   docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$1->" && return 0
@@ -31,8 +35,6 @@ done
 [ -z "$PORT" ] && { echo "预留端口区间 ${PORT_BASE}-${PORT_MAX} 已全部占用,部署中止"; exit 1; }
 echo ">> 部署到主机端口 ${PORT}"
 
-# 一步停删自身旧容器,幂等可重跑;不盲目删除占用端口的他人容器
-docker rm -f "${APP}" 2>/dev/null || true
 docker run -d --name "${APP}" --restart unless-stopped -p "${PORT}:8888" "${APP}:latest"
 
 sleep 3

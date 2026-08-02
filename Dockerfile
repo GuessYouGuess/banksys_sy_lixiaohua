@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir --timeout 120 -i "${PIP_INDEX_URL}" -r requiremen
 COPY app/ ./app/
 COPY models/ ./models/
 COPY data/ ./data/
+COPY run.py ./run.py
 
 EXPOSE 8888
 
@@ -18,4 +19,5 @@ EXPOSE 8888
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8888/_stcore/health', timeout=3)"
 
-CMD ["streamlit", "run", "app/main.py", "--server.port=8888", "--server.address=0.0.0.0", "--server.headless=true"]
+# run.py 会把仓库根目录加入 sys.path,保证 import app 可用
+CMD ["streamlit", "run", "run.py", "--server.port=8888", "--server.address=0.0.0.0", "--server.headless=true"]

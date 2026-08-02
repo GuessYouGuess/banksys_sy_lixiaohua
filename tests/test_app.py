@@ -1,8 +1,11 @@
-"""应用冒烟测试:侧边栏导航两页可渲染(streamlit AppTest 真实执行脚本)。"""
+"""应用冒烟测试:侧边栏导航两页可渲染(streamlit AppTest 真实执行脚本)。
+
+APP_PATH 用 run.py(生产入口,内含 sys.path 修复),保证测试覆盖真实启动路径。
+"""
 
 from streamlit.testing.v1 import AppTest
 
-APP_PATH = "app/main.py"
+APP_PATH = "run.py"
 
 
 def test_analysis_page_renders():
@@ -25,3 +28,18 @@ def test_switch_to_predict_page():
     # Assert
     assert not at.exception
     assert at.header[0].value == "🎯 认购预测"
+
+
+def test_predict_page_submit_with_defaults():
+    # Arrange: 进入认购预测页
+    at = AppTest.from_file(APP_PATH, default_timeout=120).run()
+    at.sidebar.radio[0].set_value("认购预测").run()
+
+    # Act: 修改一个下拉框取值后提交表单
+    at.selectbox(key="cat_job").set_value("student").run()
+    at.button[0].click().run()
+
+    # Assert: 无异常,展示认购概率指标
+    assert not at.exception
+    assert at.metric[0].label == "认购概率"
+    assert at.metric[0].value.endswith("%")
