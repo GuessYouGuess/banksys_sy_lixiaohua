@@ -8,13 +8,12 @@
 
 ## 当前状态 (最后更新: 2026-08-02 · by Claude)
 
-- **阶段**:`US-2 开发完成,待确认发 PR #2`(对应 `06` 六步流程:第 ③④ 步,`feature/2-analysis` 分支)
+- **阶段**:`US-3 完成,待确认发 PR #3`(对应 `06` 六步流程:第 ③④ 步,`feature/3-training` 分支)
 - **上一步完成**:
-  - M2 数据层(commit `5cc6684`):config schema 常量、data_io 加载/校验、data/ 入库、真实数据门禁测试
-  - M3 分析逻辑(commit `aa47f18`):7 个统计纯函数 + 7 测试
-  - M4 分析页(commit `bce9375`):侧边栏导航、概览指标、目标/分类/数值分布、分组对比、相关矩阵、交互筛选;AppTest 冒烟;Dockerfile 加 data 拷贝
-  - 本地自检全绿:ruff ✅、19 tests ✅、覆盖率 97.5% ✅、真实启动健康检查 ok ✅
-- **下一步 (TODO 第一条)**:✋ 等人类确认 → push `feature/2-analysis` + `gh pr create`(PR #2, closes #2)
+  - M5 离线训练(commit `5d6202d`):training 模块 + CLI + 门禁,30 tests 全绿,覆盖率 98%
+  - **真实训练验证:AUC 0.8089 ≥ 0.75 门禁通过**(accuracy 0.7944 / precision 0.3586 / recall 0.7203 / f1 0.4789);重跑指标一致(seed=42 可复现)
+  - 产物入库:`models/`(model.joblib 6.7KB / metrics.json / metadata.json)
+- **下一步 (TODO 第一条)**:✋ 等人类确认 → push `feature/3-training` + `gh pr create`(PR #3, closes #3)
 - **阻塞项**:无
 
 > **⚠️ 分支策略修订(待人类确认)**:原计划 M1~M9 全在本分支。按 `04`/`06`「一需求一分支一 PR、PR < 400 行」,改为:
@@ -73,6 +72,8 @@
 | 2026-08-02 | `duration` 特征:训练保留、预测表单不收集(中位数填充) | 经典陷阱:通话时长在真实预测时未知;策略固定并写注释 |
 | 2026-08-02 | 模型产物**进 Git**(2026-08-02 人类确认) | joblib 小体积;部署镜像直接 COPY 产物,免构建期训练,镜像确定性好 |
 | 2026-08-02 | ⏳ **待决策:二分类算法选择** | 推荐:逻辑回归 + 类别权重起步,GBM 作为对比;评估后固定一种,门禁 AUC ≥ 0.75 不变 |
+| 2026-08-02 | **数据事实修正:test.csv 无标签** | 实测 test.csv 仅 21 特征列(7500 行,无 subscribe),是预测池而非评估集;评估改用 train.csv 内部 80/20 分层划分(seed=42)。`data_io.validate_schema` 增加 `require_target` 参数支持无标签集 |
+| 2026-08-02 | **算法定案:逻辑回归(class_weight=balanced)** | 真实训练 AUC 0.8089 通过门禁,可复现;GBM 留作后续对比(不阻塞交付) |
 
 ---
 
