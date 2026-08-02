@@ -1,0 +1,32 @@
+# CD:合并 main 后自动部署到服务器(SSH → 同步 → 构建 → 运行 → 健康检查)
+# 依赖 GitHub Secrets:SSH_PRIVATE_KEY / SSH_HOST / SSH_USER(规范 05 第 5 节)
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 同步代码到服务器
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: /opt/banksys_sy_lixiaohua
+
+      - name: 构建并部署(端口自动回退)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/banksys_sy_lixiaohua
+            bash scripts/deploy.sh

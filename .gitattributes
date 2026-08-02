@@ -1,0 +1,9 @@
+# 统一行尾,避免 Windows CRLF 造成跨平台 diff(规范 02 可复现性)
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
