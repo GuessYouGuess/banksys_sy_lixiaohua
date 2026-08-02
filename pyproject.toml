@@ -14,3 +14,6 @@ select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# CI 直接调用 pytest 时把项目根目录加入 sys.path,保证 import app 可用
+# (踩坑:本地 python -m pytest 会隐式加 cwd,CI 控制台脚本不会,见 PROGRESS GOTCHAS)
+pythonpath = ["."]
