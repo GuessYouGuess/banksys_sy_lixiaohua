@@ -1,0 +1,16 @@
+[project]
+name = "banksys-sy-lixiaohua"
+version = "0.1.0"
+description = "银行营销认购预测系统:数据分析交互页面 + 离线训练/在线预测"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# 默认 E4/E7/E9/F 基础上追加 I(import 排序,见规范 02)
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

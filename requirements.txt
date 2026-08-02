@@ -1,0 +1,6 @@
+# 生产运行依赖(版本下限锁定,安装时解析最新兼容版)
+streamlit>=1.40
+pandas>=2.0
+scikit-learn>=1.4
+joblib>=1.3
+plotly>=5.20
