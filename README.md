@@ -27,7 +27,7 @@ conda activate banksys
 pip install -r requirements-dev.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 3) 启动应用(http://localhost:8888)
-streamlit run app/main.py --server.port 8888
+streamlit run run.py --server.port 8888
 ```
 
 ## 检查命令(提交前必跑)

@@ -82,6 +82,9 @@
 
 ## 已知坑 (GOTCHAS)
 
+- **容器内 `ModuleNotFoundError: No module named 'app'`(线上故障,用户浏览器报错)**:`streamlit run app/main.py` 只把脚本目录(`/app/app`)加入 sys.path,不加入 cwd,`from app.ui...` 失败。解决:新增仓库根目录启动包装器 `run.py`(先插入 ROOT 再 import app.main),Dockerfile CMD 与 README 均改指 `run.py`。验证:去掉 pytest pythonpath 后 AppTest 3 passed(模拟容器场景)。
+- **app/main.py 模块级调用 main() 导致 radio ID 重复**:`run.py` 里 `from app.main import main` 时,模块级 `main()` 已在脚本上下文中执行一次,run.py 再调一次 → `StreamlitDuplicateElementId`。之前 pytest 全绿是假象:test_smoke 在测试进程里先导入 app.main,模块级调用发生在脚本上下文外被当作 no-op。解决:删掉 app/main.py 的模块级 `main()` 调用,统一入口 run.py。
+- **健康检查 `/_stcore/health` 返回 ok ≠ 应用渲染成功**:health 端点不执行应用脚本(会话由浏览器 websocket 触发)。本地"启动验证"必须用 AppTest 或真实浏览器访问,不能只看 health。
 - **CI `ModuleNotFoundError: No module named 'app'`**:本地 `python -m pytest` 会隐式把 cwd 加入 sys.path,CI 直接调 `pytest` 控制台脚本不会。解决:pyproject `[tool.pytest.ini_options] pythonpath = ["."]`;验证:本地直接调 `pytest.exe` 复现修复后通过。
 - **actions Node.js 20 弃用警告**:checkout@v4/setup-python@v5 被迫跑在 Node 24。解决:升 `actions/checkout@v7`、`actions/setup-python@v7`(2026-08-02 查最新 tag)。
 - **push 网络超时**:`Failed to connect to github.com:443`(HTTPS 抖动)。解决:重试;注意 push 输出 `e5aed15..f360c57` 可能已成功而后续命令报错,用 `git ls-remote`/`gh run list` 核实。

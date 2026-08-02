@@ -1,8 +1,11 @@
-"""应用冒烟测试:侧边栏导航两页可渲染(streamlit AppTest 真实执行脚本)。"""
+"""应用冒烟测试:侧边栏导航两页可渲染(streamlit AppTest 真实执行脚本)。
+
+APP_PATH 用 run.py(生产入口,内含 sys.path 修复),保证测试覆盖真实启动路径。
+"""
 
 from streamlit.testing.v1 import AppTest
 
-APP_PATH = "app/main.py"
+APP_PATH = "run.py"
 
 
 def test_analysis_page_renders():
